@@ -206,7 +206,10 @@ async function buildServer(guild) {
   for (const role of deletableRoles) await role.delete('NO RESPECT sıfır kurulum');
 
   const roles = {};
-  for (const item of rolePlan) {
+  // Discord yeni rolleri bot rolünün hemen altında oluşturur. En düşük rolden
+  // başlayarak oluşturunca KURUCU en son ve en üstte kalır; ayrıca botun kendi
+  // rolünün üzerine taşıma denemesi yapılmadığı için Missing Permissions oluşmaz.
+  for (const item of [...rolePlan].reverse()) {
     roles[item.key] = await guild.roles.create({
       name: item.name,
       color: item.color,
@@ -215,13 +218,6 @@ async function buildServer(guild) {
       reason: 'NO RESPECT sunucu kurulumu',
     });
   }
-
-  await guild.roles.setPositions(
-    rolePlan.map((item, index) => ({
-      role: roles[item.key].id,
-      position: rolePlan.length - index,
-    })),
-  );
 
   // Yetkili kategorisi ilk oluşturulduğu için kanal listesinin en üstünde kalır.
   const staffCategory = await guild.channels.create({
