@@ -69,9 +69,9 @@ const commands = [new SlashCommandBuilder()
 const rolePlan = [
   { key: 'founder', name: '☠・KURUCU', color: 0x0b0b0b, permissions: [PermissionFlagsBits.Administrator], hoist: true },
   { key: 'cofounder', name: '♛・CO-FOUNDER', color: 0x6f0000, permissions: [PermissionFlagsBits.Administrator], hoist: true },
-  { key: 'admin', name: '⚔・YÖNETİM', color: 0xb00020, permissions: [PermissionFlagsBits.ManageGuild, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.ManageRoles, PermissionFlagsBits.KickMembers, PermissionFlagsBits.BanMembers, PermissionFlagsBits.ManageMessages, PermissionFlagsBits.ModerateMembers], hoist: true },
-  { key: 'mod', name: '🛡・MODERATÖR', color: 0xe53935, permissions: [PermissionFlagsBits.KickMembers, PermissionFlagsBits.ManageMessages, PermissionFlagsBits.ModerateMembers, PermissionFlagsBits.ViewAuditLog], hoist: true },
-  { key: 'support', name: '🎫・DESTEK', color: 0xff7043, permissions: [PermissionFlagsBits.ManageMessages], hoist: true },
+  { key: 'admin', name: '⚔・YÖNETİM', color: 0xb00020, permissions: [PermissionFlagsBits.ManageGuild, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.ManageRoles, PermissionFlagsBits.KickMembers, PermissionFlagsBits.BanMembers, PermissionFlagsBits.ManageMessages, PermissionFlagsBits.ModerateMembers, PermissionFlagsBits.ManageNicknames, PermissionFlagsBits.ViewAuditLog], hoist: true },
+  { key: 'mod', name: '🛡・MODERATÖR', color: 0xe53935, permissions: [PermissionFlagsBits.KickMembers, PermissionFlagsBits.ManageMessages, PermissionFlagsBits.ModerateMembers, PermissionFlagsBits.ManageNicknames, PermissionFlagsBits.ViewAuditLog], hoist: true },
+  { key: 'support', name: '🎫・DESTEK', color: 0xff7043, permissions: [], hoist: true },
   { key: 'bot', name: '🤖・BOTLAR', color: 0x5865f2, permissions: [], hoist: true },
   { key: 'vip', name: '💎・VIP', color: 0xf1c40f, permissions: [], hoist: true },
   { key: 'member', name: '☠・NO RESPECT', color: 0x992d22, permissions: [], hoist: true },
@@ -109,28 +109,32 @@ const rolePlan = [
 const categories = [
   {
     name: '👋・KAYIT & KARŞILAMA',
+    access: 'open',
     channels: [
       ['👋・hoş-geldiniz', ChannelType.GuildText, 'Sunucuya yeni katılan üyeler burada karşılanır.'],
+      ['📜・kurallar', ChannelType.GuildText, 'Sunucu kuralları ve önemli bilgiler.'],
       ['✅・kayıt-ol', ChannelType.GuildText, 'Butonla kayıt olup üye ve kimlik rolünü seç.'],
       ['🔊・Kayıt Odası', ChannelType.GuildVoice],
     ],
   },
   {
     name: '🎫・DESTEK',
+    access: 'open',
     channels: [
       ['📩・destek-aç', ChannelType.GuildText, 'Butonlarla özel destek talebi oluştur.'],
     ],
   },
   {
     name: '☠・NO RESPECT',
+    access: 'member',
     channels: [
-      ['📜・kurallar', ChannelType.GuildText, 'Sunucu kuralları ve önemli bilgiler.'],
       ['📢・duyurular', ChannelType.GuildText, 'NO RESPECT duyuruları.'],
       ['🎭・roller', ChannelType.GuildText, 'Renk ve topluluk rollerini seç.'],
     ],
   },
   {
     name: '💀・TOPLULUK',
+    access: 'member',
     channels: [
       ['💬・genel-sohbet', ChannelType.GuildText, 'Saygı bekleme, saygını kazan.'],
       ['📸・medya', ChannelType.GuildText, 'Fotoğraf, video ve klip paylaşımı.'],
@@ -141,6 +145,7 @@ const categories = [
   },
   {
     name: '🎮・OYUN MERKEZİ',
+    access: 'member',
     channels: [
       ['🎯・ekip-ara', ChannelType.GuildText, 'Oyun arkadaşı ve ekip bul.'],
       ['🏆・oyun-sohbet', ChannelType.GuildText, 'Oyunlar hakkında konuş.'],
@@ -151,6 +156,7 @@ const categories = [
   },
   {
     name: '🔊・SES ODALARI',
+    access: 'member',
     channels: [
       ['☠・NO RESPECT', ChannelType.GuildVoice],
       ['🔥・Muhabbet', ChannelType.GuildVoice],
@@ -170,7 +176,20 @@ function staffOverwrites(guild, roles) {
     { id: roles.cofounder.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak] },
     { id: roles.admin.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak] },
     { id: roles.mod.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak] },
-    { id: roles.support.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak] },
+  ];
+}
+
+function memberOverwrites(guild, roles) {
+  const access = [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak];
+  return [
+    { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+    { id: roles.member.id, allow: access },
+    { id: roles.founder.id, allow: access },
+    { id: roles.cofounder.id, allow: access },
+    { id: roles.admin.id, allow: access },
+    { id: roles.mod.id, allow: access },
+    { id: roles.support.id, allow: access },
+    { id: roles.bot.id, allow: access },
   ];
 }
 
@@ -232,7 +251,9 @@ async function buildServer(guild) {
     type: ChannelType.GuildCategory,
     permissionOverwrites: staffOverwrites(guild, roles),
   });
+  const staffChannels = {};
   for (const [name, type, topic] of [
+    ['📌・yetki-bilgileri', ChannelType.GuildText, 'Yetkili rollerinin görev ve izin sınırları.'],
     ['📋・yetkili-sohbet', ChannelType.GuildText, 'Yönetim ekibi özel sohbeti.'],
     ['📝・başvuru-takip', ChannelType.GuildText, 'Yetkili başvurularını takip et.'],
     ['🎫・ticket-log', ChannelType.GuildText, 'Destek taleplerinin kayıt alanı.'],
@@ -246,8 +267,20 @@ async function buildServer(guild) {
     ['📊・sunucu-log', ChannelType.GuildText, 'Sunucu olay kayıtları.'],
     ['🔊・Yetkili Odası', ChannelType.GuildVoice],
   ]) {
-    await guild.channels.create({ name, type, topic, parent: staffCategory.id });
+    const permissionOverwrites = name === '🎫・ticket-log'
+      ? [
+          ...staffOverwrites(guild, roles),
+          { id: roles.support.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
+        ]
+      : undefined;
+    staffChannels[name] = await guild.channels.create({ name, type, topic, parent: staffCategory.id, permissionOverwrites });
   }
+  await createText(
+    staffChannels['📌・yetki-bilgileri'],
+    '🔐 YETKİ DAĞILIMI',
+    '**☠・KURUCU:** Tam yönetici; tüm sunucu ve rol ayarları.\n**♛・CO-FOUNDER:** Tam yönetici; kurucuyla aynı yönetim erişimi.\n**⚔・YÖNETİM:** Kanal/rol yönetimi, ban, kick, timeout, mesaj ve sunucu yönetimi.\n**🛡・MODERATÖR:** Mesaj yönetimi, kick, timeout, takma ad ve denetim kayıtları.\n**🎫・DESTEK:** Yalnızca açılan destek talepleri ve ticket kaydı; genel yönetim yetkisi yok.\n\nRenk, yaş, cinsiyet, oyun ve ilgi alanı rollerinin hiçbir yönetim yetkisi yoktur.',
+    0x8b0000,
+  );
 
   await guild.channels.create({
     name: '🎟️・AÇIK TALEPLER',
@@ -257,17 +290,34 @@ async function buildServer(guild) {
 
   const created = {};
   for (const categoryPlan of categories) {
-    const category = await guild.channels.create({ name: categoryPlan.name, type: ChannelType.GuildCategory });
+    const baseOverwrites = categoryPlan.access === 'member' ? memberOverwrites(guild, roles) : [];
+    const category = await guild.channels.create({
+      name: categoryPlan.name,
+      type: ChannelType.GuildCategory,
+      permissionOverwrites: baseOverwrites,
+    });
     for (const [name, type, topic] of categoryPlan.channels) {
       const readOnly = ['📜・kurallar', '📢・duyurular', '🎭・roller', '👋・hoş-geldiniz', '✅・kayıt-ol', '📩・destek-aç'].includes(name);
       const permissionOverwrites = readOnly
-        ? [
-            { id: guild.roles.everyone.id, allow: [PermissionFlagsBits.ViewChannel], deny: [PermissionFlagsBits.SendMessages] },
-            { id: roles.founder.id, allow: [PermissionFlagsBits.SendMessages] },
-            { id: roles.cofounder.id, allow: [PermissionFlagsBits.SendMessages] },
-            { id: roles.admin.id, allow: [PermissionFlagsBits.SendMessages] },
-            { id: roles.mod.id, allow: [PermissionFlagsBits.SendMessages] },
-          ]
+        ? categoryPlan.access === 'member'
+          ? [
+              { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+              { id: roles.member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory], deny: [PermissionFlagsBits.SendMessages] },
+              { id: roles.support.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory], deny: [PermissionFlagsBits.SendMessages] },
+              { id: roles.bot.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
+              { id: roles.founder.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+              { id: roles.cofounder.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+              { id: roles.admin.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+              { id: roles.mod.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+            ]
+          : [
+              { id: guild.roles.everyone.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory], deny: [PermissionFlagsBits.SendMessages] },
+              { id: roles.bot.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
+              { id: roles.founder.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+              { id: roles.cofounder.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+              { id: roles.admin.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+              { id: roles.mod.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+            ]
         : undefined;
       const channel = await guild.channels.create({ name, type, topic, parent: category.id, permissionOverwrites });
       created[name] = channel;
@@ -281,10 +331,10 @@ async function buildServer(guild) {
   const row = (...buttons) => [new ActionRowBuilder().addComponents(...buttons)];
   const button = (id, label, emoji, style = ButtonStyle.Secondary) => new ButtonBuilder().setCustomId(id).setLabel(label).setEmoji(emoji).setStyle(style);
   await createText(created['👋・hoş-geldiniz'], '👋 NO RESPECT’E HOŞ GELDİN', 'Yeni gelen üyeler burada karşılanır. Kayıt olmak için **✅・kayıt-ol** kanalına geç ve sana uygun butonu seç.', 0x8b0000);
-  await createText(created['✅・kayıt-ol'], '✅ HIZLI KAYIT', 'Aşağıdan sana uygun seçeneği seç. **KAYITSIZ** rolün kaldırılacak ve **NO RESPECT** üye rolün verilecek. Daha sonra **🎭・roller** kanalından renk, yaş, oyun ve ilgi alanı rollerini seçebilirsin.', 0x2ecc71, row(
-    button('register:woman', 'Kadın', '👩', ButtonStyle.Danger),
-    button('register:man', 'Erkek', '👨', ButtonStyle.Primary),
-    button('register:unspecified', 'Belirtmek İstemiyorum', '🧑', ButtonStyle.Secondary),
+  await createText(created['✅・kayıt-ol'], '✅ HIZLI KAYIT', 'Önce cinsiyet seçimini yap, ardından açılan menüden yaş grubunu seç. İşlem tamamlanınca **KAYITSIZ** rolün kaldırılır; **NO RESPECT + cinsiyet + yaş** rollerin otomatik verilir.', 0x2ecc71, row(
+    button('register:gender:woman', 'Kadın', '👩', ButtonStyle.Danger),
+    button('register:gender:man', 'Erkek', '👨', ButtonStyle.Primary),
+    button('register:gender:unspecified', 'Belirtmek İstemiyorum', '🧑', ButtonStyle.Secondary),
   ));
   await createText(created['🎭・roller'], '🎨 RENK ROLLERİ', 'Yalnızca kullanıcı adının rengini değiştirir, hiçbir yetki vermez. Aynı anda tek renk kullanabilirsin.', 0x8b0000, row(
     button('self:color:red', 'Kırmızı', '🔴', ButtonStyle.Danger), button('self:color:purple', 'Mor', '🟣', ButtonStyle.Primary), button('self:color:blue', 'Mavi', '🔵', ButtonStyle.Primary), button('self:color:pink', 'Pembe', '🌸'), button('self:color:green', 'Yeşil', '🟢', ButtonStyle.Success),
@@ -413,32 +463,50 @@ client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
 
   if (interaction.customId.startsWith('register:')) {
-    const key = interaction.customId.split(':')[1];
+    const [, step, key, genderKey] = interaction.customId.split(':');
     const identityNames = {
       woman: '👩・KADIN',
       man: '👨・ERKEK',
       unspecified: '🧑・BELİRTMEK İSTEMİYORUM',
     };
-    const selectedName = identityNames[key];
-    if (!selectedName) return;
+    const ageNames = {
+      age1: '🔹・18–21',
+      age2: '🔸・22–25',
+      age3: '🔻・26+',
+    };
+
+    if (step === 'gender' && identityNames[key]) {
+      const ageRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId(`register:age:age1:${key}`).setLabel('18–21').setEmoji('🔹').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId(`register:age:age2:${key}`).setLabel('22–25').setEmoji('🔸').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId(`register:age:age3:${key}`).setLabel('26+').setEmoji('🔻').setStyle(ButtonStyle.Primary),
+      );
+      return interaction.reply({ content: `Cinsiyet seçimin: **${identityNames[key]}**\nŞimdi yaş grubunu seç:`, components: [ageRow], ephemeral: true });
+    }
+
+    if (step !== 'age' || !ageNames[key] || !identityNames[genderKey]) return;
 
     const memberRole = interaction.guild.roles.cache.find(role => role.name === '☠・NO RESPECT');
     const newRole = interaction.guild.roles.cache.find(role => role.name === '🔒・KAYITSIZ');
     const identityRoles = Object.values(identityNames)
       .map(name => interaction.guild.roles.cache.find(role => role.name === name))
       .filter(Boolean);
-    const selectedRole = interaction.guild.roles.cache.find(role => role.name === selectedName);
+    const ageRoles = Object.values(ageNames)
+      .map(name => interaction.guild.roles.cache.find(role => role.name === name))
+      .filter(Boolean);
+    const selectedIdentity = interaction.guild.roles.cache.find(role => role.name === identityNames[genderKey]);
+    const selectedAge = interaction.guild.roles.cache.find(role => role.name === ageNames[key]);
 
-    if (!memberRole || !selectedRole) {
+    if (!memberRole || !selectedIdentity || !selectedAge) {
       return interaction.reply({ content: '❌ Kayıt rolleri bulunamadı. Yetkiliye bildir.', ephemeral: true });
     }
 
-    await interaction.member.roles.remove(identityRoles).catch(() => null);
+    await interaction.member.roles.remove([...identityRoles, ...ageRoles]).catch(() => null);
     if (newRole) await interaction.member.roles.remove(newRole).catch(() => null);
-    await interaction.member.roles.add([memberRole, selectedRole]);
-    return interaction.reply({
-      content: `✅ Kaydın tamamlandı! **${memberRole.name}** ve **${selectedRole.name}** rolleri verildi.`,
-      ephemeral: true,
+    await interaction.member.roles.add([memberRole, selectedIdentity, selectedAge]);
+    return interaction.update({
+      content: `✅ Kaydın tamamlandı!\n**${memberRole.name}** • **${selectedIdentity.name}** • **${selectedAge.name}**`,
+      components: [],
     });
   }
 
