@@ -108,12 +108,25 @@ const rolePlan = [
 
 const categories = [
   {
+    name: '👋・KAYIT & KARŞILAMA',
+    channels: [
+      ['👋・hoş-geldiniz', ChannelType.GuildText, 'Sunucuya yeni katılan üyeler burada karşılanır.'],
+      ['✅・kayıt-ol', ChannelType.GuildText, 'Butonla kayıt olup üye ve kimlik rolünü seç.'],
+      ['🔊・Kayıt Odası', ChannelType.GuildVoice],
+    ],
+  },
+  {
+    name: '🎫・DESTEK',
+    channels: [
+      ['📩・destek-aç', ChannelType.GuildText, 'Butonlarla özel destek talebi oluştur.'],
+    ],
+  },
+  {
     name: '☠・NO RESPECT',
     channels: [
       ['📜・kurallar', ChannelType.GuildText, 'Sunucu kuralları ve önemli bilgiler.'],
       ['📢・duyurular', ChannelType.GuildText, 'NO RESPECT duyuruları.'],
       ['🎭・roller', ChannelType.GuildText, 'Renk ve topluluk rollerini seç.'],
-      ['👋・aramıza-katılanlar', ChannelType.GuildText, 'Yeni üyeler burada karşılanır.'],
     ],
   },
   {
@@ -146,12 +159,6 @@ const categories = [
       ['🎶・Müzik 2', ChannelType.GuildVoice],
       ['➕・Oda Oluştur', ChannelType.GuildVoice],
       ['💤・AFK', ChannelType.GuildVoice],
-    ],
-  },
-  {
-    name: '🎫・DESTEK',
-    channels: [
-      ['📩・destek-aç', ChannelType.GuildText, 'Butonlarla özel destek talebi oluştur.'],
     ],
   },
 ];
@@ -252,7 +259,7 @@ async function buildServer(guild) {
   for (const categoryPlan of categories) {
     const category = await guild.channels.create({ name: categoryPlan.name, type: ChannelType.GuildCategory });
     for (const [name, type, topic] of categoryPlan.channels) {
-      const readOnly = ['📜・kurallar', '📢・duyurular', '🎭・roller', '👋・aramıza-katılanlar', '📩・destek-aç'].includes(name);
+      const readOnly = ['📜・kurallar', '📢・duyurular', '🎭・roller', '👋・hoş-geldiniz', '✅・kayıt-ol', '📩・destek-aç'].includes(name);
       const permissionOverwrites = readOnly
         ? [
             { id: guild.roles.everyone.id, allow: [PermissionFlagsBits.ViewChannel], deny: [PermissionFlagsBits.SendMessages] },
@@ -273,6 +280,12 @@ async function buildServer(guild) {
   await createText(created['📢・duyurular'], '📢 NO RESPECT DUYURULARI', 'Tüm önemli gelişmeler ve etkinlikler burada paylaşılacak.');
   const row = (...buttons) => [new ActionRowBuilder().addComponents(...buttons)];
   const button = (id, label, emoji, style = ButtonStyle.Secondary) => new ButtonBuilder().setCustomId(id).setLabel(label).setEmoji(emoji).setStyle(style);
+  await createText(created['👋・hoş-geldiniz'], '👋 NO RESPECT’E HOŞ GELDİN', 'Yeni gelen üyeler burada karşılanır. Kayıt olmak için **✅・kayıt-ol** kanalına geç ve sana uygun butonu seç.', 0x8b0000);
+  await createText(created['✅・kayıt-ol'], '✅ HIZLI KAYIT', 'Aşağıdan sana uygun seçeneği seç. **KAYITSIZ** rolün kaldırılacak ve **NO RESPECT** üye rolün verilecek. Daha sonra **🎭・roller** kanalından renk, yaş, oyun ve ilgi alanı rollerini seçebilirsin.', 0x2ecc71, row(
+    button('register:woman', 'Kadın', '👩', ButtonStyle.Danger),
+    button('register:man', 'Erkek', '👨', ButtonStyle.Primary),
+    button('register:unspecified', 'Belirtmek İstemiyorum', '🧑', ButtonStyle.Secondary),
+  ));
   await createText(created['🎭・roller'], '🎨 RENK ROLLERİ', 'Yalnızca kullanıcı adının rengini değiştirir, hiçbir yetki vermez. Aynı anda tek renk kullanabilirsin.', 0x8b0000, row(
     button('self:color:red', 'Kırmızı', '🔴', ButtonStyle.Danger), button('self:color:purple', 'Mor', '🟣', ButtonStyle.Primary), button('self:color:blue', 'Mavi', '🔵', ButtonStyle.Primary), button('self:color:pink', 'Pembe', '🌸'), button('self:color:green', 'Yeşil', '🟢', ButtonStyle.Success),
   ));
@@ -398,6 +411,36 @@ client.on('interactionCreate', async (interaction) => {
   }
 
   if (!interaction.isButton()) return;
+
+  if (interaction.customId.startsWith('register:')) {
+    const key = interaction.customId.split(':')[1];
+    const identityNames = {
+      woman: '👩・KADIN',
+      man: '👨・ERKEK',
+      unspecified: '🧑・BELİRTMEK İSTEMİYORUM',
+    };
+    const selectedName = identityNames[key];
+    if (!selectedName) return;
+
+    const memberRole = interaction.guild.roles.cache.find(role => role.name === '☠・NO RESPECT');
+    const newRole = interaction.guild.roles.cache.find(role => role.name === '🔒・KAYITSIZ');
+    const identityRoles = Object.values(identityNames)
+      .map(name => interaction.guild.roles.cache.find(role => role.name === name))
+      .filter(Boolean);
+    const selectedRole = interaction.guild.roles.cache.find(role => role.name === selectedName);
+
+    if (!memberRole || !selectedRole) {
+      return interaction.reply({ content: '❌ Kayıt rolleri bulunamadı. Yetkiliye bildir.', ephemeral: true });
+    }
+
+    await interaction.member.roles.remove(identityRoles).catch(() => null);
+    if (newRole) await interaction.member.roles.remove(newRole).catch(() => null);
+    await interaction.member.roles.add([memberRole, selectedRole]);
+    return interaction.reply({
+      content: `✅ Kaydın tamamlandı! **${memberRole.name}** ve **${selectedRole.name}** rolleri verildi.`,
+      ephemeral: true,
+    });
+  }
 
   if (interaction.customId.startsWith('self:')) {
     const [, group, key] = interaction.customId.split(':');
@@ -617,7 +660,7 @@ client.on('guildMemberAdd', async (member) => {
     if (used?.inviter) inviterText = `${used.inviter} (${used.code})`;
     inviteCache.set(member.guild.id, new Map(invites.map(invite => [invite.code, invite.uses || 0])));
   }
-  const welcome = member.guild.channels.cache.find((channel) => channel.name === '👋・aramıza-katılanlar' && channel.isTextBased());
+  const welcome = member.guild.channels.cache.find((channel) => channel.name === '👋・hoş-geldiniz' && channel.isTextBased());
   if (welcome) {
     await welcome.send({ embeds: [new EmbedBuilder().setColor(0x8b0000).setTitle('☠ ARAMIZA HOŞ GELDİN').setDescription(`${member}, **NO RESPECT** ailesine katıldın!\nSeninle birlikte **${member.guild.memberCount}** kişiyiz.\nKuralları okuyup rollerini seçmeyi unutma.`).setThumbnail(member.user.displayAvatarURL()).addFields({ name: 'Hesap yaşı', value: `${accountDays} gün`, inline: true })] }).catch(() => null);
   }
