@@ -1,6 +1,6 @@
 {
   "name": "no-respect-bot",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "private": true,
   "description": "NO RESPECT Discord sunucu kurulumu, rol seçimi ve ticket botu.",
   "main": "index.js",

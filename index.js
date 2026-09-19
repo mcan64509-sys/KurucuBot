@@ -18,7 +18,16 @@ const {
 } = require('discord.js');
 const storage = require('./storage');
 
-const { TOKEN, CLIENT_ID, GUILD_ID } = process.env;
+function envValue(name, fallback = '') {
+  const value = String(process.env[name] || fallback).trim();
+  return value.replace(/^(["'])(.*)\1$/, '$2').trim();
+}
+
+// Railway Raw Editor bazen değerleri tırnaklı kaydedebiliyor. Tırnakları temizle;
+// sabit Discord kimlikleri eksikse yalnızca bu kurulum için güvenli varsayılanları kullan.
+const TOKEN = envValue('TOKEN');
+const CLIENT_ID = envValue('CLIENT_ID', '1550881144189362299');
+const GUILD_ID = envValue('GUILD_ID', '1499126901443137576');
 const SETUP_ENABLED = process.env.SETUP_ENABLED !== 'false';
 const INVITE_FILTER = process.env.INVITE_FILTER !== 'false';
 const SPAM_FILTER = process.env.SPAM_FILTER !== 'false';
@@ -28,8 +37,8 @@ const tempVoiceOwners = new Map();
 const destructiveTracker = new Map();
 const inviteCache = new Map();
 
-if (!TOKEN || !CLIENT_ID || !GUILD_ID) {
-  console.error('Eksik .env bilgisi: TOKEN, CLIENT_ID ve GUILD_ID zorunludur.');
+if (!TOKEN) {
+  console.error('Eksik Railway değişkeni: TOKEN. Variables bölümüne yeni Discord bot tokenını ekle.');
   process.exit(1);
 }
 
@@ -224,7 +233,8 @@ async function buildServer(guild) {
     ['📋・yetkili-sohbet', ChannelType.GuildText, 'Yönetim ekibi özel sohbeti.'],
     ['📝・başvuru-takip', ChannelType.GuildText, 'Yetkili başvurularını takip et.'],
     ['🎫・ticket-log', ChannelType.GuildText, 'Destek taleplerinin kayıt alanı.'],
-    ['📥・giriş-çıkış-log', ChannelType.GuildText, 'Katılan ve ayrılan üyeler.'],
+    ['📥・gelen-log', ChannelType.GuildText, 'Sunucuya katılan üyeler ve davet bilgileri.'],
+    ['📤・giden-log', ChannelType.GuildText, 'Sunucudan ayrılan üyeler.'],
     ['🗑️・mesaj-log', ChannelType.GuildText, 'Silinen ve düzenlenen mesajlar.'],
     ['🎭・rol-log', ChannelType.GuildText, 'Üye rol değişiklikleri.'],
     ['🔊・ses-log', ChannelType.GuildText, 'Ses kanalı hareketleri.'],
@@ -544,7 +554,7 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
 
 client.on('guildMemberRemove', async (member) => {
   const joined = member.joinedTimestamp ? `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>` : 'Bilinmiyor';
-  await sendLog(member.guild, '📥・giriş-çıkış-log', '💀 ÜYE AYRILDI', `${member.user.tag} (${member.id})\nSunucuya katılımı: ${joined}`, 0x7f8c8d);
+  await sendLog(member.guild, '📤・giden-log', '💀 ÜYE AYRILDI', `${member.user.tag} (${member.id})\nSunucuya katılımı: ${joined}`, 0x7f8c8d);
 });
 
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
@@ -615,7 +625,7 @@ client.on('guildMemberAdd', async (member) => {
   if (welcome) {
     await welcome.send({ embeds: [new EmbedBuilder().setColor(0x8b0000).setTitle('☠ ARAMIZA HOŞ GELDİN').setDescription(`${member}, **NO RESPECT** ailesine katıldın!\nSeninle birlikte **${member.guild.memberCount}** kişiyiz.\nKuralları okuyup rollerini seçmeyi unutma.`).setThumbnail(member.user.displayAvatarURL()).addFields({ name: 'Hesap yaşı', value: `${accountDays} gün`, inline: true })] }).catch(() => null);
   }
-  await sendLog(member.guild, '📥・giriş-çıkış-log', '📥 ÜYE KATILDI', `${member} (${member.id})\nHesap yaşı: **${accountDays} gün**\nDavet eden: ${inviterText}\nÜye sayısı: **${member.guild.memberCount}**`, accountDays < 7 ? 0xe74c3c : 0x2ecc71);
+  await sendLog(member.guild, '📥・gelen-log', '📥 ÜYE KATILDI', `${member} (${member.id})\nHesap yaşı: **${accountDays} gün**\nDavet eden: ${inviterText}\nÜye sayısı: **${member.guild.memberCount}**`, accountDays < 7 ? 0xe74c3c : 0x2ecc71);
   if (accountDays < 7) await sendLog(member.guild, '🛡️・güvenlik-log', '⚠️ YENİ HESAP UYARISI', `${member} hesabı yalnızca **${accountDays} günlük**.`, 0xe74c3c);
 });
 
